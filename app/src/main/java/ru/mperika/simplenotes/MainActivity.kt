@@ -56,6 +56,11 @@ class MainActivity : AppCompatActivity() {
         recyclerV.addOnItemTouchListener(RVClickListener(this, recyclerV, object: RVClickListener.OnItemClickListener{
             override fun onItemClick(view: View, position: Int) {
                 Toast.makeText(baseContext, "Click on the item $position", Toast.LENGTH_SHORT).show()
+                val intent = Intent(EDIT_ACTIVITY)
+                intent.putExtra("requestCode",1)
+                intent.putExtra("note", notes[position])
+                intent.putExtra("position", position)
+                startActivityForResult(intent, 1)
             }
 
             override fun onItemLongClick(view: View?, position: Int) {
@@ -66,9 +71,9 @@ class MainActivity : AppCompatActivity() {
 
         fab.setOnClickListener {
 
-            var intent = Intent(EDIT_ACTIVITY)
-            startActivityForResult(intent, 1)
-
+            val intent = Intent(EDIT_ACTIVITY)
+            intent.putExtra("requestCode", 0)
+            startActivityForResult(intent, 0)
         }
     }
 
@@ -76,12 +81,15 @@ class MainActivity : AppCompatActivity() {
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
 
         // Преобразует результат активити выбора файла сначала в URI потом проставляет его в ImageView
-        if ((requestCode == 1) and (resultCode == Activity.RESULT_OK) and (data != null)) {
-            var note = data?.getParcelableExtra("note") as Note
+        if ((requestCode == 0) and (resultCode == Activity.RESULT_OK) and (data != null)) {
+            val note = data?.getParcelableExtra("note") as Note
             notes.add(note)
             Log.d("Notes size: ", "${notes.size}")
-            adapter.notifyDataSetChanged()
+        } else if ((requestCode == 1) and (resultCode == Activity.RESULT_OK) and (data != null)) {
+            val note = data?.getParcelableExtra("note") as Note
+            notes[data?.extras["position"] as Int] = note
         }
+        adapter.notifyDataSetChanged()
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {

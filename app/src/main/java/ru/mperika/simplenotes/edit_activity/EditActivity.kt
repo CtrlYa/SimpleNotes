@@ -20,16 +20,26 @@ import java.io.InputStream
 class EditActivity : AppCompatActivity() {
 
     var imageURI: Uri? = null
-    lateinit var header: String
-    lateinit var text: String
+    var note: Note? = null
+    var requestCode: Int = 0
+    var position: Int? = -1
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_edit)
+        requestCode = intent.extras["requestCode"] as Int
+        if (requestCode == 1) {
+            note = intent.getParcelableExtra("note")
+            imageURI = note!!.imageURI
+            imageView.setImageURI(note!!.imageURI)
+            headerTV.setText(note!!.noteHeader)
+            textTV.setText(note!!.noteText)
+            position = intent.extras["position"] as Int
+        }
 
         button.setOnClickListener {
             save()
-
         }
 
         floatingActionButton.setOnClickListener {
@@ -38,19 +48,29 @@ class EditActivity : AppCompatActivity() {
     }
 
     private fun save() {
-        var note = Note(imageURI, headerTV.text.toString(), textTV.text.toString())
+        note = if (requestCode == 0) {
+            Note(imageURI, headerTV.text.toString(), textTV.text.toString())
+        } else {
+            Note(note!!.id, imageURI, headerTV.text.toString(), textTV.text.toString())
+        }
 
         var resultIntent = Intent()
         resultIntent.putExtra("note", note)
+        resultIntent.putExtra("requestCode", requestCode)
+        resultIntent.putExtra("position", position)
         setResult(Activity.RESULT_OK, resultIntent)
         Log.d("Note: ", note.toString())
 
 
         val cv = ContentValues();
-        cv.put("n_header", note.noteHeader)
-        cv.put("n_text", note.noteText)
-        cv.put("n_image", note.imageURI.toString())
-        DBHelper(baseContext).writableDatabase.insert("note", null, cv)
+        cv.put("n_header", note!!.noteHeader)
+        cv.put("n_text", note!!.noteText)
+        cv.put("n_image", note!!.imageURI.toString())
+        if (requestCode == 0) {
+            DBHelper(baseContext).writableDatabase.insert("note", null, cv)
+        } else {
+            DBHelper(baseContext).writableDatabase.update("note", cv, "n_id = ${note!!.id}", null)
+        }
 
         finish()
     }
