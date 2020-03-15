@@ -2,6 +2,7 @@ package ru.mperika.simplenotes
 
 import android.app.Activity
 import android.content.Intent
+import android.content.pm.ActivityInfo
 import android.database.sqlite.SQLiteDatabase
 import android.os.Bundle
 import android.util.Log
@@ -24,10 +25,12 @@ class MainActivity : AppCompatActivity() {
 
     private var notes: ArrayList<Note> = arrayListOf()
     private lateinit var adapter: RVDataAdapter
+    private val EDIT_ACTIVITY = "ru.mperika.START_EDIT"
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+        requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
         setSupportActionBar(toolbar)
         downloadDBData() // Если во внутренней БД есть данные, то загружаем и передаем в адаптер готовую модель
         adapter = RVDataAdapter(
@@ -56,7 +59,7 @@ class MainActivity : AppCompatActivity() {
 
         fab.setOnClickListener {
 
-            var intent = Intent(this, EditActivity::class.java)
+            var intent = Intent(EDIT_ACTIVITY)
             startActivityForResult(intent, 1)
 
         }
