@@ -3,6 +3,7 @@ package ru.mperika.simplenotes
 import android.app.Activity
 import android.content.Intent
 import android.content.pm.ActivityInfo
+import android.content.pm.ConfigurationInfo
 import android.database.sqlite.SQLiteDatabase
 import android.os.Bundle
 import android.util.Log
@@ -17,6 +18,7 @@ import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.content_main.*
 import ru.mperika.simplenotes.data_source.Note
 import ru.mperika.simplenotes.data_source.createNotesListFromCursor
+import ru.mperika.simplenotes.dialogs.SettingsDialog
 import ru.mperika.simplenotes.recycler_main.RVClickListener
 import ru.mperika.simplenotes.recycler_main.RVDataAdapter
 import ru.mperika.simplenotes.recycler_main.RVItemDecoration
@@ -30,7 +32,7 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
-        requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
+
         setSupportActionBar(toolbar)
         downloadDBData() // Если во внутренней БД есть данные, то загружаем и передаем в адаптер готовую модель
         adapter = RVDataAdapter(
@@ -38,8 +40,13 @@ class MainActivity : AppCompatActivity() {
             notes
         )
 
+        var lines = if (resources.configuration.orientation == ActivityInfo.SCREEN_ORIENTATION_USER) {
+            4
+        } else {
+            2
+        }
 
-        val linear = GridLayoutManager(this, 2, GridLayoutManager.VERTICAL, false)
+        val linear = GridLayoutManager(this, lines, GridLayoutManager.VERTICAL, false)
         recyclerV.setHasFixedSize(true)
         recyclerV.layoutManager = linear
         val decor = RVItemDecoration(15, 2)
@@ -88,8 +95,13 @@ class MainActivity : AppCompatActivity() {
         // automatically handle clicks on the Home/Up button, so long
         // as you specify a parent activity in AndroidManifest.xml.
         return when (item.itemId) {
-            R.id.action_settings -> true
-            else -> super.onOptionsItemSelected(item)
+            R.id.action_settings -> {
+//                var intent = Intent(SETTINGS_ACTIVITY)
+//                startActivity(intent)
+                val dialog = SettingsDialog()
+                dialog.show(supportFragmentManager, "dialog")
+                true
+            } else -> super.onOptionsItemSelected(item)
         }
     }
 

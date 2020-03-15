@@ -1,17 +1,17 @@
-package ru.mperika.simplenotes
+package ru.mperika.simplenotes.edit_activity
 
 import android.app.Activity
 import android.content.ContentValues
 import android.content.Intent
-import android.database.Cursor
 import android.net.Uri
 import android.os.Bundle
-import android.provider.MediaStore.Images
 import android.provider.OpenableColumns
 import android.util.Log
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import kotlinx.android.synthetic.main.activity_edit.*
+import ru.mperika.simplenotes.DBHelper
+import ru.mperika.simplenotes.R
 import ru.mperika.simplenotes.data_source.Note
 import java.io.File
 import java.io.InputStream
