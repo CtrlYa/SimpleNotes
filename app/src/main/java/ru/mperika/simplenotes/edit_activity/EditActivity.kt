@@ -19,10 +19,11 @@ import java.io.InputStream
 
 class EditActivity : AppCompatActivity() {
 
-    var imageURI: Uri? = null
-    var note: Note? = null
-    var requestCode: Int = 0
-    var position: Int? = -1
+    private var imageURI: Uri? = null
+    private var note: Note? = null
+    private var requestCode: Int = 0 // 0 - новая заметка, 1 - редактирование существующей
+    private var position: Int? = -1
+    private lateinit var oldURI: Uri
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -43,6 +44,7 @@ class EditActivity : AppCompatActivity() {
         }
 
         floatingActionButton.setOnClickListener {
+            oldURI = imageURI!!
             startActivityForResult(Intent.createChooser(createIntent(), "Select a file"), 1)
         }
     }
@@ -72,6 +74,13 @@ class EditActivity : AppCompatActivity() {
             DBHelper(baseContext).writableDatabase.update("note", cv, "n_id = ${note!!.id}", null)
         }
 
+        if (!(note!!.imageURI?.equals(oldURI))!!) {
+            if (File(oldURI.path).delete()) {
+                Toast.makeText(this, "Удалено", Toast.LENGTH_SHORT).show()
+                //TODO: добавить проверку на то ссылаются ли другие заметки на это изображение
+            }
+        }
+
         finish()
     }
 
@@ -80,9 +89,10 @@ class EditActivity : AppCompatActivity() {
 
         // Преобразует результат активити выбора файла сначала в URI потом проставляет его в ImageView
         if (data != null) {
+
             Log.d("Path from Intent", data.data.path)
             imageView.setImageURI(data.data)
-            Toast.makeText(applicationContext, data?.data.toString(), Toast.LENGTH_LONG).show()
+//            Toast.makeText(applicationContext, data?.data.toString(), Toast.LENGTH_LONG).show()
             saveToInnerDir(data.data)
         }
     }
