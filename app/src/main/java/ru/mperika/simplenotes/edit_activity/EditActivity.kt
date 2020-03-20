@@ -13,6 +13,7 @@ import kotlinx.android.synthetic.main.activity_edit.*
 import ru.mperika.simplenotes.DBHelper
 import ru.mperika.simplenotes.R
 import ru.mperika.simplenotes.data_source.Note
+import ru.mperika.simplenotes.data_source.isImageURIMultiplyUsing
 import java.io.File
 import java.io.InputStream
 
@@ -50,6 +51,7 @@ class EditActivity : AppCompatActivity() {
     }
 
     private fun save() {
+        saveToInnerDir(imageURI)
         note = if (requestCode == 0) {
             Note(imageURI, headerTV.text.toString(), textTV.text.toString())
         } else {
@@ -68,20 +70,26 @@ class EditActivity : AppCompatActivity() {
         cv.put("n_header", note!!.noteHeader)
         cv.put("n_text", note!!.noteText)
         cv.put("n_image", note!!.imageURI.toString())
+
+        safeFileDelete()
+
         if (requestCode == 0) {
             DBHelper(baseContext).writableDatabase.insert("note", null, cv)
         } else {
             DBHelper(baseContext).writableDatabase.update("note", cv, "n_id = ${note!!.id}", null)
         }
+        finish()
+    }
 
+    private fun safeFileDelete() {
         if (!(note!!.imageURI?.equals(oldURI))!!) {
-            if (File(oldURI.path).delete()) {
-                Toast.makeText(this, "Удалено", Toast.LENGTH_SHORT).show()
-                //TODO: добавить проверку на то ссылаются ли другие заметки на это изображение
+            if (!isImageURIMultiplyUsing(baseContext, oldURI)) {
+                if (File(oldURI.path).delete()) {
+                    Toast.makeText(this, "Удалено", Toast.LENGTH_SHORT).show()
+                    //TODO: добавить проверку на то ссылаются ли другие заметки на это изображение
+                }
             }
         }
-
-        finish()
     }
 
     // Вызывается после вызова метода startActivityForResult(Intent.createChooser(createIntent(), "Select a file"), 1)
@@ -93,7 +101,7 @@ class EditActivity : AppCompatActivity() {
             Log.d("Path from Intent", data.data.path)
             imageView.setImageURI(data.data)
 //            Toast.makeText(applicationContext, data?.data.toString(), Toast.LENGTH_LONG).show()
-            saveToInnerDir(data.data)
+            imageURI = data.data
         }
     }
 
@@ -121,7 +129,7 @@ class EditActivity : AppCompatActivity() {
         returnCursor?.close()
 
         file.copyInputStreamToFile(inputStream)
-
+        inputStream?.close()
         imageURI = Uri.fromFile(file)
     }
 }
