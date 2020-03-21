@@ -3,12 +3,18 @@
     <!-- Base application theme. -->
     <style name="AppTheme" parent="Theme.AppCompat.DayNight.DarkActionBar">
         <!-- Customize your theme here. -->
-        <item name="colorPrimary">@color/colorPrimary</item>
+        <item name="colorPrimary">@color/vailet</item>
         <item name="colorPrimaryDark">@color/black</item>
         <item name="colorAccent">@color/vailet</item>
         <item name="android:navigationBarColor">@color/black</item>
+        <item name="android:popupMenuStyle">@style/PopupMenu</item>
     </style>
 
+    <style name="PopupMenu" parent="Widget.AppCompat.PopupMenu">
+        <item name="android:textColor">@color/lightGrey</item>
+        <item name="android:popupBackground">@color/black</item>
+    </style>
+    
     <style name="AppTheme.NoActionBar">
         <item name="windowActionBar">false</item>
         <item name="windowNoTitle">true</item>

@@ -3,22 +3,22 @@ package ru.mperika.simplenotes
 import android.app.Activity
 import android.content.Intent
 import android.content.pm.ActivityInfo
-import android.content.pm.ConfigurationInfo
-import android.database.sqlite.SQLiteDatabase
 import android.os.Bundle
 import android.util.Log
+import android.view.ContextThemeWrapper
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
+import android.widget.PopupMenu
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.GridLayoutManager
-import androidx.recyclerview.widget.RecyclerView
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.content_main.*
 import ru.mperika.simplenotes.data_source.Note
 import ru.mperika.simplenotes.data_source.createNotesListFromCursor
 import ru.mperika.simplenotes.dialogs.SettingsDialog
+import ru.mperika.simplenotes.edit_activity.deleteNote
 import ru.mperika.simplenotes.recycler_main.RVClickListener
 import ru.mperika.simplenotes.recycler_main.RVDataAdapter
 import ru.mperika.simplenotes.recycler_main.RVItemDecoration
@@ -40,11 +40,12 @@ class MainActivity : AppCompatActivity() {
             notes
         )
 
-        var lines = if (resources.configuration.orientation == ActivityInfo.SCREEN_ORIENTATION_USER) {
-            4
-        } else {
-            2
-        }
+        var lines =
+            if (resources.configuration.orientation == ActivityInfo.SCREEN_ORIENTATION_USER) {
+                4
+            } else {
+                2
+            }
 
         val linear = GridLayoutManager(this, lines, GridLayoutManager.VERTICAL, false)
         recyclerV.setHasFixedSize(true)
@@ -53,24 +54,38 @@ class MainActivity : AppCompatActivity() {
         recyclerV.addItemDecoration(decor)
         recyclerV.adapter = adapter
 
-        recyclerV.addOnItemTouchListener(RVClickListener(this, recyclerV, object: RVClickListener.OnItemClickListener{
-            override fun onItemClick(view: View, position: Int) {
-                Toast.makeText(baseContext, "Click on the item $position", Toast.LENGTH_SHORT).show()
-                val intent = Intent(EDIT_ACTIVITY)
-                intent.putExtra("requestCode",1)
-                intent.putExtra("note", notes[position])
-                intent.putExtra("position", position)
-                startActivityForResult(intent, 1)
-            }
+        recyclerV.addOnItemTouchListener(
+            RVClickListener(
+                this,
+                recyclerV,
+                object : RVClickListener.OnItemClickListener {
 
-            override fun onItemLongClick(view: View?, position: Int) {
-                Toast.makeText(baseContext, "LOOOONG Click on the item $position", Toast.LENGTH_SHORT).show()
-            }
+                    //Короткое нажатие
+                    override fun onItemClick(view: View, position: Int) {
+                        runEditActivity(position)
+                    }
 
-        }))
+                    //Длинное нажатие
+                    override fun onItemLongClick(view: View?, position: Int) {
+                        val wrapper = ContextThemeWrapper(baseContext, R.style.PopupMenu)
+                        val popup = PopupMenu(wrapper, view)
+                        popup.inflate(R.menu.note_card_options)
+                        popup.setOnMenuItemClickListener(PopupMenu.OnMenuItemClickListener { item ->
+                            when (item.itemId) {
+                                R.id.action_delete -> {
+                                    if (deleteNote(baseContext, position, notes)) {
+                                        adapter.notifyDataSetChanged()
+                                    }
+                                }
+                            }
+                            true
+                        })
+                        popup.show()
+                    }
+                })
+        )
 
         fab.setOnClickListener {
-
             val intent = Intent(EDIT_ACTIVITY)
             intent.putExtra("requestCode", 0)
             startActivityForResult(intent, 0)
@@ -109,8 +124,20 @@ class MainActivity : AppCompatActivity() {
                 val dialog = SettingsDialog()
                 dialog.show(supportFragmentManager, "dialog")
                 true
-            } else -> super.onOptionsItemSelected(item)
+            }
+            else -> super.onOptionsItemSelected(item)
         }
+    }
+
+    /**
+     * Метод для запуска активити в режиме редактирования, по короткому нажатию на заметку в списке
+     */
+    fun runEditActivity(position: Int) {
+        val intent = Intent(EDIT_ACTIVITY)
+        intent.putExtra("requestCode", 1)
+        intent.putExtra("note", notes[position])
+        intent.putExtra("position", position)
+        startActivityForResult(intent, 1)
     }
 
     /**

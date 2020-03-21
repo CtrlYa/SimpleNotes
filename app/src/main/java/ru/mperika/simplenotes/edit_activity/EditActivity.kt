@@ -2,6 +2,7 @@ package ru.mperika.simplenotes.edit_activity
 
 import android.app.Activity
 import android.content.ContentValues
+import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
@@ -11,6 +12,7 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import kotlinx.android.synthetic.main.activity_edit.*
 import ru.mperika.simplenotes.DBHelper
+import ru.mperika.simplenotes.NOTES_TABLE_NAME
 import ru.mperika.simplenotes.R
 import ru.mperika.simplenotes.data_source.Note
 import ru.mperika.simplenotes.data_source.isImageURIMultiplyUsing
@@ -139,4 +141,17 @@ class EditActivity : AppCompatActivity() {
  */
 fun File.copyInputStreamToFile(inputStream : InputStream) {
     this.outputStream().use { fileOut -> inputStream.copyTo(fileOut) }
+}
+
+/**
+ * Функция для удаления заметки из базы данных и списка RecyclerView
+ */
+fun deleteNote(context: Context, position: Int, notes: ArrayList<Note>) : Boolean {
+    val db = DBHelper(context).writableDatabase
+    val note = notes[position]
+    if (db.delete(NOTES_TABLE_NAME, "n_id = ${note.id}", null) > 0) {
+        notes.remove(note)
+        return true
+    }
+    return false
 }

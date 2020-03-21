@@ -15,10 +15,12 @@ class RVDataAdapter : RecyclerView.Adapter<RVDataAdapter.ViewHolder> {
 
     private var inflater: LayoutInflater
     private var notesList: List<Note>
+    private var context: Context
 
     constructor(context: Context, notes: List<Note>) {
         this.notesList = notes
         this.inflater = LayoutInflater.from(context)
+        this.context = context
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
@@ -38,7 +40,7 @@ class RVDataAdapter : RecyclerView.Adapter<RVDataAdapter.ViewHolder> {
     }
 
 
-    class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView){
+    class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         val imageView: ImageView = itemView.noteIV
         val headerTV: TextView = itemView.headerTextView
         val bodyTV: TextView = itemView.bodyTextView
