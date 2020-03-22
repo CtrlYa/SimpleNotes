@@ -8,10 +8,10 @@ import android.net.Uri
 import android.os.Bundle
 import android.provider.OpenableColumns
 import android.util.Log
-import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import kotlinx.android.synthetic.main.activity_edit.*
 import ru.mperika.simplenotes.DBHelper
+import ru.mperika.simplenotes.DoInBackground
 import ru.mperika.simplenotes.NOTES_TABLE_NAME
 import ru.mperika.simplenotes.R
 import ru.mperika.simplenotes.data_source.Note
@@ -47,8 +47,10 @@ class EditActivity : AppCompatActivity() {
         }
 
         floatingActionButton.setOnClickListener {
-            oldURI = imageURI!!
-            startActivityForResult(Intent.createChooser(createIntent(), "Select a file"), 1)
+            if (requestCode == 1) {
+                oldURI = imageURI!!
+            }
+            startActivityForResult(Intent.createChooser(createImageSelectIntent(), "Select a file"), 1)
         }
     }
 
@@ -60,25 +62,27 @@ class EditActivity : AppCompatActivity() {
             Note(note!!.id, imageURI, headerTV.text.toString(), textTV.text.toString())
         }
 
-        var resultIntent = Intent()
-        resultIntent.putExtra("note", note)
-        resultIntent.putExtra("requestCode", requestCode)
-        resultIntent.putExtra("position", position)
+        val resultIntent = createSaveIntent()
         setResult(Activity.RESULT_OK, resultIntent)
         Log.d("Note: ", note.toString())
 
 
-        val cv = ContentValues();
+        val cv = ContentValues()
         cv.put("n_header", note!!.noteHeader)
         cv.put("n_text", note!!.noteText)
         cv.put("n_image", note!!.imageURI.toString())
 
-        safeFileDelete()
-
         if (requestCode == 0) {
-            DBHelper(baseContext).writableDatabase.insert("note", null, cv)
-        } else {
-            DBHelper(baseContext).writableDatabase.update("note", cv, "n_id = ${note!!.id}", null)
+            DoInBackground<Void, Void, Void> {
+                DBHelper(baseContext).writableDatabase
+                    .insert("note", null, cv)
+            }
+        } else {    // Если код запроса 1 - "Редактирование"
+            safeFileDelete()    // Удаляем файл из внутренней папки
+            DoInBackground<Void, Void, Void> {
+                DBHelper(baseContext).writableDatabase
+                    .update("note", cv, "n_id = ${note!!.id}", null)
+            }
         }
         finish()
     }
@@ -86,12 +90,17 @@ class EditActivity : AppCompatActivity() {
     private fun safeFileDelete() {
         if (!(note!!.imageURI?.equals(oldURI))!!) {
             if (!isImageURIMultiplyUsing(baseContext, oldURI)) {
-                if (File(oldURI.path).delete()) {
-                    Toast.makeText(this, "Удалено", Toast.LENGTH_SHORT).show()
-                    //TODO: добавить проверку на то ссылаются ли другие заметки на это изображение
-                }
+                File(oldURI.path).delete()
             }
         }
+    }
+
+    private fun createSaveIntent() : Intent {
+        var resultIntent = Intent()
+        resultIntent.putExtra("note", note)
+        resultIntent.putExtra("requestCode", requestCode)
+        resultIntent.putExtra("position", position)
+        return resultIntent
     }
 
     // Вызывается после вызова метода startActivityForResult(Intent.createChooser(createIntent(), "Select a file"), 1)
@@ -100,7 +109,7 @@ class EditActivity : AppCompatActivity() {
         // Преобразует результат активити выбора файла сначала в URI потом проставляет его в ImageView
         if (data != null) {
 
-            Log.d("Path from Intent", data.data.path)
+            Log.d("Path from Intent", data.data?.path)
             imageView.setImageURI(data.data)
 //            Toast.makeText(applicationContext, data?.data.toString(), Toast.LENGTH_LONG).show()
             imageURI = data.data
@@ -110,7 +119,7 @@ class EditActivity : AppCompatActivity() {
     /**
      * Метод для создания Intent для открытия окна выбора изображения
      */
-    private fun createIntent(): Intent {
+    private fun createImageSelectIntent(): Intent {
         return Intent()
             .setType("image/jpeg") //Устанавливаем MIME тип контента
             .setAction(Intent.ACTION_GET_CONTENT)

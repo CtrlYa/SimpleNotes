@@ -10,18 +10,19 @@ import android.view.Menu
 import android.view.MenuItem
 import android.view.View
 import android.widget.PopupMenu
-import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.GridLayoutManager
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.content_main.*
 import ru.mperika.simplenotes.data_source.Note
 import ru.mperika.simplenotes.data_source.createNotesListFromCursor
+import ru.mperika.simplenotes.data_source.isImageURIMultiplyUsing
 import ru.mperika.simplenotes.dialogs.SettingsDialog
 import ru.mperika.simplenotes.edit_activity.deleteNote
 import ru.mperika.simplenotes.recycler_main.RVClickListener
 import ru.mperika.simplenotes.recycler_main.RVDataAdapter
 import ru.mperika.simplenotes.recycler_main.RVItemDecoration
+import java.io.File
 
 class MainActivity : AppCompatActivity() {
 
@@ -73,9 +74,20 @@ class MainActivity : AppCompatActivity() {
                         popup.setOnMenuItemClickListener(PopupMenu.OnMenuItemClickListener { item ->
                             when (item.itemId) {
                                 R.id.action_delete -> {
-                                    if (deleteNote(baseContext, position, notes)) {
-                                        adapter.notifyDataSetChanged()
+                                    // Проверяем есть ли еще ссылки на картинку в памяти, если нет - удаляем
+                                    if(notes[position].imageURI?.let {
+                                            !isImageURIMultiplyUsing(baseContext, it)
+                                        }!!) {
+                                        File(notes[position].imageURI?.path).delete()
                                     }
+                                    // Удаляем саму заметку из базы
+                                    DoInBackground<Void, Void, Void>{
+                                        if (deleteNote(baseContext, position, notes)) {
+                                            recyclerV.post{
+                                                adapter.notifyDataSetChanged()
+                                            }
+                                        }
+                                    }.execute()
                                 }
                             }
                             true
@@ -91,6 +103,8 @@ class MainActivity : AppCompatActivity() {
             startActivityForResult(intent, 0)
         }
     }
+
+
 
     // Вызывается после вызова метода startActivityForResult(Intent.createChooser(createIntent(), "Select a file"), 1)
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {

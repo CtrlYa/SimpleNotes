@@ -3,6 +3,7 @@ package ru.mperika.simplenotes.data_source
 import android.content.Context
 import android.database.Cursor
 import android.net.Uri
+import android.os.AsyncTask
 import android.os.Parcelable
 import kotlinx.android.parcel.Parcelize
 import ru.mperika.simplenotes.DBHelper
@@ -37,7 +38,6 @@ fun isImageURIMultiplyUsing(context: Context, uri: Uri) : Boolean {
     val cursor = db.rawQuery("SELECT COUNT(*) AS count FROM $NOTES_TABLE_NAME WHERE n_image = '${uri.toString()}'", null)
     val countIndex = cursor.getColumnIndex("count")
     cursor.moveToNext()
-    val cursorValue = cursor.getInt(countIndex)
     val result = cursor.getInt(countIndex) > 1
     cursor.close()
     return result
