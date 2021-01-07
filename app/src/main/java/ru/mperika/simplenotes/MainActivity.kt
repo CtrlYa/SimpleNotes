@@ -1,6 +1,8 @@
 package ru.mperika.simplenotes
 
 import android.app.Activity
+import android.app.AlertDialog
+import android.app.Dialog
 import android.content.Intent
 import android.content.pm.ActivityInfo
 import android.os.Bundle
@@ -11,6 +13,7 @@ import android.view.MenuItem
 import android.view.View
 import android.widget.PopupMenu
 import androidx.appcompat.app.AppCompatActivity
+import androidx.fragment.app.DialogFragment
 import androidx.recyclerview.widget.GridLayoutManager
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.content_main.*
@@ -74,6 +77,13 @@ class MainActivity : AppCompatActivity() {
                         popup.setOnMenuItemClickListener(PopupMenu.OnMenuItemClickListener { item ->
                             when (item.itemId) {
                                 R.id.action_delete -> {
+                                    //todo: показывать диалог с подтверждением
+                                    val const = AlertDialog.Builder(baseContext)
+                                        .setTitle("Удалить заметку?")
+                                        .setPositiveButton("Да", null)
+                                        .setNegativeButton("Нет", null)
+                                        .create()
+
                                     // Проверяем есть ли еще ссылки на картинку в памяти, если нет - удаляем
                                     if(notes[position].imageURI?.let {
                                             !isImageURIMultiplyUsing(baseContext, it)
@@ -81,6 +91,7 @@ class MainActivity : AppCompatActivity() {
                                         File(notes[position].imageURI?.path).delete()
                                     }
                                     // Удаляем саму заметку из базы
+                                    //TODO: работает некорректно
                                     DoInBackground<Void, Void, Void>{
                                         if (deleteNote(baseContext, position, notes)) {
                                             recyclerV.post{

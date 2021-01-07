@@ -78,7 +78,7 @@ class EditActivity : AppCompatActivity() {
                     .insert("note", null, cv)
             }
         } else {    // Если код запроса 1 - "Редактирование"
-            safeFileDelete()    // Удаляем файл из внутренней папки
+            safeFileDelete()    // Пробуем удалить файл из внутренней папки
             DoInBackground<Void, Void, Void> {
                 DBHelper(baseContext).writableDatabase
                     .update("note", cv, "n_id = ${note!!.id}", null)
